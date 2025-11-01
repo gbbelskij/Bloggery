@@ -1,0 +1,49 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pgpassword
+      POSTGRES_DB: pgdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:  # Добавьте healthcheck, чтобы другие сервисы ждали готовности БД
+      test: ["CMD-SHELL", "pg_isready -U pguser -d pgdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: "no"
+
+  migrate:
+    image: migrate/migrate:v4.19.0
+    depends_on:  # Ждёт, пока БД будет healthy
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://pguser:pgpassword@db:5432/pgdb?sslmode=disable"
+      - "up"
+
+  app:
+    build: .
+    depends_on:  # Ждёт успешного завершения migrate
+      # migrate:
+      #   condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    environment:
+      CONFIG_PATH: /app/config/local.yaml  # Измените на абсолютный путь в контейнере
+      POSTGRES_CONN_STRING: postgres://pguser:pgpassword@db:5432/pgdb?sslmode=disable
+    ports:
+      - "8080:8080"
+    stop_grace_period: 15s  # Даёт 15 секунд на graceful shutdown (увеличьте, если нужно)
+    restart: "no"
+
+volumes:
+  pgdata:
