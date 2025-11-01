@@ -146,3 +146,37 @@ func (s *Storage) GetNextPosts(userId uuid.UUID, paginationParams structs.Pagina
 
 	return parsedPosts, nil
 }
+
+func (s *Storage) GetPost(postId uuid.UUID) (models.DbPost, error) {
+	const op = "repository.storage.GetPost"
+
+	post, err := s.Conn.Query(
+		context.Background(),
+		`SELECT * FROM posts WHERE post_id = $1`,
+		postId,
+	)
+	if err != nil {
+		return models.DbPost{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	parsed_post, err := pgx.CollectOneRow(post, pgx.RowToStructByName[models.DbPost])
+	if err != nil {
+		return models.DbPost{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return parsed_post, nil
+}
+
+func (s *Storage) DeletePost(postId uuid.UUID) error {
+	const op = "repository.storage.DeletePost"
+
+	_, err := s.Conn.Exec(
+		context.Background(),
+		`DELETE FROM posts WHERE post_id = $1`,
+		postId,
+	)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
+}

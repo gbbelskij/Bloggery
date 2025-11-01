@@ -5,9 +5,10 @@ import (
 	"log/slog"
 	"net/http"
 	"new_service/internal/config"
-	"new_service/internal/handlers/add_post"
+	addPost "new_service/internal/handlers/add_post"
 	"new_service/internal/handlers/auth"
-	getnextposts "new_service/internal/handlers/getPosts"
+	deletePost "new_service/internal/handlers/delete"
+	getNextPosts "new_service/internal/handlers/getPosts"
 	"new_service/internal/handlers/logout"
 	"new_service/internal/handlers/registration"
 	sl "new_service/internal/lib/logger"
@@ -65,9 +66,10 @@ func main() {
 	protected := router.Group("/protected")
 	protected.Use(jwt_auth.JWTAuthMiddleware(cfg.JWTSecret, rdb))
 	{
-		protected.POST("/save_post", add_post.New(log, storage))
-		protected.GET("/next_posts", getnextposts.New(log, storage))
+		protected.POST("/save-post", addPost.New(log, storage))
+		protected.GET("/next-posts", getNextPosts.New(log, storage))
 		protected.GET("/logout", logout.New(log, rdb, cfg.JWTSecret))
+		protected.DELETE("/delete-post", deletePost.New(log, storage))
 	}
 
 	srv := &http.Server{

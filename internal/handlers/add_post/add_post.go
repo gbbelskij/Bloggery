@@ -1,4 +1,4 @@
-package add_post
+package addPost
 
 import (
 	"log/slog"

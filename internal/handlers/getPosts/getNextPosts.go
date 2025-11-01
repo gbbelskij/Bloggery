@@ -1,4 +1,4 @@
-package getnextposts
+package getNextPosts
 
 import (
 	"log/slog"
