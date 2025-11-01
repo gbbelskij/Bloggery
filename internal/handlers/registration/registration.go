@@ -49,5 +49,6 @@ func New(userSaver UserSaver, log *slog.Logger) gin.HandlerFunc {
 		}
 
 		log.Info("user saved sucessfully")
+		c.JSON(http.StatusOK, gin.H{"message": "registration successfull"})
 	}
 }

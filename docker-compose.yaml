@@ -18,6 +18,17 @@ services:
       start_period: 10s
     restart: "no"
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+
   migrate:
     image: migrate/migrate:v4.19.0
     depends_on:  # Ждёт, пока БД будет healthy
@@ -33,9 +44,9 @@ services:
   app:
     build: .
     depends_on:  # Ждёт успешного завершения migrate
-      # migrate:
-      #   condition: service_completed_successfully
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     environment:
       CONFIG_PATH: /app/config/local.yaml  # Измените на абсолютный путь в контейнере

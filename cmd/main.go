@@ -8,6 +8,7 @@ import (
 	"new_service/internal/handlers/add_post"
 	"new_service/internal/handlers/auth"
 	getnextposts "new_service/internal/handlers/getPosts"
+	"new_service/internal/handlers/logout"
 	"new_service/internal/handlers/registration"
 	sl "new_service/internal/lib/logger"
 	"new_service/internal/repository/storage"
@@ -20,6 +21,7 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
@@ -42,16 +44,30 @@ func main() {
 	}
 	defer storage.Conn.Close()
 
+	rdb := redis.NewClient(&redis.Options{
+		Addr: cfg.RedisAddress,
+		DB:   0,
+	})
+	defer rdb.Close()
+
+	_, err = rdb.Ping(context.Background()).Result()
+	if err != nil {
+		log.Info("failed to start redis db")
+		os.Exit(1)
+	}
+	log.Info("started redis db")
+
 	router := gin.Default()
 
 	router.POST("/registration", registration.New(storage, log))
 	router.POST("/auth", auth.New(log, cfg, storage))
 
 	protected := router.Group("/protected")
-	protected.Use(jwt_auth.JWTAuthMiddleware(cfg.JWTSecret))
+	protected.Use(jwt_auth.JWTAuthMiddleware(cfg.JWTSecret, rdb))
 	{
 		protected.POST("/save_post", add_post.New(log, storage))
 		protected.GET("/next_posts", getnextposts.New(log, storage))
+		protected.GET("/logout", logout.New(log, rdb, cfg.JWTSecret))
 	}
 
 	srv := &http.Server{

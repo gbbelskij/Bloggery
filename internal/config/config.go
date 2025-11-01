@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Env                string `yaml:"env" env-required:"true"`
 	PostgresConnString string `yaml:"postgres_conn_string" env-required:"true"`
+	RedisAddress       string `yaml:"redis_address" env-required:"true"`
 	JWTSecret          string `yaml:"jwt_secret"`
 	HTTPServer         `yaml:"http_server"`
 }
