@@ -14,6 +14,8 @@
 - Запуск Redis в Docker контейнере для кэширования и управления сессиями
 
 ## Установка и запуск
+
+```bash
 git clone https://github.com/gbbelskij/Bloggery
 cd Bloggery
 docker-compose up --build
