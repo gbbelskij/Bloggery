@@ -19,6 +19,7 @@
 git clone https://github.com/gbbelskij/Bloggery
 cd Bloggery
 docker-compose up --build
+```
 
 ### Предварительные требования
 - Go 1.20+
